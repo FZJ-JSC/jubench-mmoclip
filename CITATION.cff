@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+title: "JUPITER Benchmark Suite: MMoCLIP"
+message: >-
+  In addition to citing this benchmark repository, please also cite either the JUPITER Benchmark Suite or the accompanying SC24 paper
+authors:
+  - given-names: Mehdi
+    family-names: Cherti
+    affiliation: Forschungszentrum Jülich, Jülich Supercomputing Centre
+    orcid: 'https://orcid.org/0000-0001-5865-0469'
+  - given-names: Sebastian
+    family-names: Achilles
+    affiliation: Forschungszentrum Jülich, Jülich Supercomputing Centre
+    orcid: 'https://orcid.org/0000-0002-1943-6803'
+  - given-names: Andreas
+    family-names: Herten
+    affiliation: Forschungszentrum Jülich, Jülich Supercomputing Centre
+    orcid: 'https://orcid.org/0000-0002-7150-2505'
+  - given-names: Chelsea
+    family-names: John
+    affiliation: Forschungszentrum Jülich, Jülich Supercomputing Centre
+    orcid: 'https://orcid.org/0000-0003-3777-7393'
+  - given-names: Jayesh
+    family-names: Badwaik
+    affiliation: Forschungszentrum Jülich, Jülich Supercomputing Centre
+    orcid: 'https://orcid.org/0000-0002-5252-8179'
+abstract: "The MMoCLIP benchmark of the JUPITER Benchmark Suite"
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.12737559
+    description: Version-agnostic Zenodo Identifier
+repository-code: 'https://github.com/FZJ-JSC/jubench-mmoclip/'
+license: MIT
+date-released: '2024-07-13'
+references:
+  - title: "JUPITER Benchmark Suite"
+    type: software
+    doi: 10.5281/zenodo.12737073

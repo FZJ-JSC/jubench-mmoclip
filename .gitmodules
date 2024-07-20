@@ -1,0 +1,3 @@
+[submodule "src/open_clip"]
+	path = src/open_clip
+	url = https://github.com/mlfoundations/open_clip

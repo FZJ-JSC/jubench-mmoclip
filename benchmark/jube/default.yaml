@@ -1,0 +1,115 @@
+name: openclip
+outpath: bench_run
+comment: OpenCLIP benchmark
+
+parameterset:
+  - name: globalParameter
+    parameter:
+      - name: modules
+        _: ml Stages/2022 GCC/11.2.0 OpenMPI/4.1.2 CUDA/11.5 cuDNN/8.3.1.22-CUDA-11.5 NCCL/2.12.7-1-CUDA-11.5 PyTorch/1.11-CUDA-11.5 torchvision/0.12.0
+  - name: executeset
+    init_with: platform.xml
+    parameter: 
+      - name: args_starter
+        _: --cpus-per-task=$threadspertask
+  - name: systemParameter
+    init_with: platform.xml
+    parameter: 
+      - name: preprocess
+        mode: text
+        separator: |
+        _: 
+            $modules;
+            source env/bin/activate;
+            export CUDA_VISIBLE_DEVICES=0,1,2,3;
+            export MASTER_PORT=12802;
+            master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1);
+            export MASTER_ADDR=$master_addr"i";
+            export PYTHONPATH="$PYTHONPATH:open_clip/src";
+      - name: threadspertask
+        _: 24
+      - name: nodes
+        _: 8
+      - name: nodes
+        tag: test
+        _: 1
+      - name: nodes
+        tag: scaling
+        _: 1,2,4,8,16,32,64,128,256
+      - name: nodes
+        tag: strong_scaling
+        _: 4,6,8,12,16
+      - name: ready_file
+        _: ready
+      - name: n_gpu
+        _: 4
+      - name: taskspernode
+        _: $n_gpu
+      - name: timelimit
+        _: 30
+      - name: queue
+        _: booster
+      - name: account
+        _: jscbenchmark
+      - name: gres
+        _: gpu:$n_gpu
+      - name: executable
+        _: python -u $jube_benchmark_home/../../src/open_clip/src/training/main.py 
+      - name: args_exec
+        _: --dataset-type synthetic --train-num-samples $num_samples --epochs 1 --batch-size=$batch_size --workers=$threadspertask --model $model --dist-url="env://" --name test --logs logs --local-loss --gather-with-grad $grad_checkpointing --log-every-n-steps 1
+  #benchmark configuration
+  - name: param_set
+    parameter: 
+        - {name: model,  _: "ViT-L-14"}
+        - {name: batch_size, type: int, mode: python, _: '{"ViT-L-14": 512}["$model"]'}
+        - {name: num_samples, type: int, mode: python, _: '3200000'}
+        - {name: grad_checkpointing, type: str, "_": "--grad-checkpointing"}
+#Operation
+step:
+  name: submit
+  #work_dir: "jobsystem_bench_${jube_benchmark_id}_${jube_wp_id}"
+  use: 
+    - globalParameter
+    - systemParameter
+    - executeset
+    - param_set
+    - from: platform.xml
+      _: jobfiles
+    - from: platform.xml
+      _: executesub
+  do:
+    done_file: $ready_file
+    _: 
+        $modules;
+        python -m venv env; 
+        source env/bin/activate;
+        bench_folder=$(pwd);
+        cd $jube_benchmark_home/../../src;
+        cd open_clip;
+        pip install -r requirements-training.txt;
+        python setup.py develop;
+        cd $bench_folder;
+        $submit $submit_script;
+patternset:
+    - name: pattern
+      pattern: 
+        - {name: done_percent, type: float, _: '\((\d*)%\)]'}
+        - {name: throughput, type: float, _: ", $jube_pat_fp/s,"}
+        - {name: time_per_iteration_secs, type: float, _: 'Batch \(t\): $jube_pat_fp, '}
+        - {name: total_time_secs, mode: python, type: float, _: "${time_per_iteration_secs_sum}-${time_per_iteration_secs_first}"} 
+
+analyser:
+  name: analyse
+  use: pattern #use existing patternset
+  analyse:
+    step: submit
+    file: job.err #file which should be scanned
+
+#Create result table
+result:
+  use: analyse #use existing analyser
+  table:
+    name: result
+    style: pretty
+    sort: nodes
+    column: [nodes, n_gpu, threadspertask, queue, account, model, batch_size, done_percent_last, throughput_avg, time_per_iteration_secs_avg, total_time_secs]
